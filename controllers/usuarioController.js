@@ -1,8 +1,9 @@
 const express = require('express');
 const yup = require('yup');
 const Usuario = require('../model/Usuario');
-const sequelize = require('../database/db');
+const db = require('../database/db');
 const asyncHandler = require('express-async-handler');
+const Perfil = require('../model/Perfil');
 
 const router = express.Router();
 
@@ -10,14 +11,23 @@ const schema = yup.object().shape({
     nome: yup.string().required(),
     email: yup.string().required().email(),
     senha: yup.string().required().min(6).max(32),
+    perfil: yup.string().required()
 });
 
 router.post('/cadastrar', asyncHandler(async(req, res) => {
         schema.isValid(req.body)
         .then(function (valid) {
             if(valid){
-                const usuario = Usuario.create(req.body);
-                res.status(200).send();         
+                (async () => {
+                    const usuario = await Usuario.create({
+                        "nome": req.body.nome,
+                        "email": req.body.email,
+                        "senha": req.body.senha,
+                        "perfil": await Perfil.findOne({ tipo: String(req.body.perfil) }),
+                    });
+                    res.send();  
+                })();
+  
             } else {
                 res.status(400).send('Dados incorretos!');
             }   
@@ -26,16 +36,16 @@ router.post('/cadastrar', asyncHandler(async(req, res) => {
 
 router.get('/listar', asyncHandler(async(req, res) => {
 
-        const usuarios = await Usuario.find();
+        const usuarios = await Usuario.find().populate("perfil");
         console.log(usuarios);
-        res.status(200).send(usuarios);
+        res.send(usuarios);
 
 }));
 
-router.get('/deletar/:id', asyncHandler(async(req, res) => {
+router.get('/deletar/:email', asyncHandler(async(req, res) => {
 
-            const usuario = await Usuario.deleteOne({ _id: req.params.id }, function (err) {});
-            res.status(200).send();
+            const usuario = await Usuario.deleteOne({ email: req.params.email }, function (err) {});
+            res.send();
     
 }));
 
@@ -62,4 +72,4 @@ router.post('/editar', asyncHandler(async(req, res) => {
 
 }));
 
-module.exports = app => app.use('/auth', router)
+module.exports = app => app.use('/usuario', router)

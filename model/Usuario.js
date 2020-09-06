@@ -19,10 +19,11 @@ const UsuarioSchema = new mongoose.Schema({
     createdAt: {
       type: Date,
       default: Date.now,
+    },
+    perfil: {
+      type: mongoose.Types.ObjectId, ref: "Perfil"
     }
-
 });
 
 const Usuario = mongoose.model('Usuario', UsuarioSchema);
-
 module.exports = Usuario;
